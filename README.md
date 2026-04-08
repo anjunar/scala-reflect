@@ -1,25 +1,32 @@
 # scala-reflect
 
-`scala-reflect` is a small Scala 3 reflection library for JVM and Scala.js projects.
+`scala-reflect` is a compile-time reflection system for Scala (JVM + Scala.js) based on macros and generated metadata descriptors.
 It extracts structural type metadata at compile time and exposes it through lightweight descriptors that you can register, query, and use at runtime.
 
-The library is built around Scala 3 macros instead of Java reflection-heavy APIs, which makes it useful when you want:
+## Why this library?
 
+Runtime reflection in Scala and Java has fundamental issues:
+
+- slow and unsafe
+- poor generic type resolution
+- not available on Scala.js
+- difficult to unify across platforms
+
+`scala-reflect` replaces runtime reflection with:
+
+- compile-time generated metadata
+- strongly typed property access
+- cross-platform compatibility on JVM and Scala.js
+
+## Key Features
+
+- compile-time `PropertyDescriptor` generation
+- safe getter/setter access generation
+- support for annotations and generics
+- unified model across Scala.js and JVM
 - stable type metadata for classes, properties, constructors, and annotations
-- property accessors generated from Scala selectors such as `_.name`
 - a simple runtime registry for descriptors and factories
 - a lightweight classloader-style abstraction for descriptor lookup and subtype queries
-- the same API shape on JVM and Scala.js
-
-## Features
-
-- Compile-time generation of `ClassDescriptor`, `PropertyDescriptor`, `ConstructorDescriptor`, and `TypeDescriptor`
-- Support for parameterized types and type variables
-- Read/write `PropertyAccessor`s generated from selectors
-- Global `ReflectRegistry` for registration, lookup, subtype checks, and instance factories
-- Local `ReflectClassLoader` instances with optional parent chaining
-- `ReflectClassLoaderWithResources` for bundling descriptors and string resources
-- `PropertySupport` helpers for schema-style APIs
 
 ## Installation
 
@@ -34,6 +41,54 @@ libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.0.0"
 // Scala.js
 libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0"
 ```
+
+## Example
+
+```scala
+import reflect.macros.PropertySupport
+
+val properties = PropertySupport.extractPropertiesWithAccessors[User]
+```
+
+## Core Idea
+
+Instead of:
+
+- discovering structure at runtime
+- guessing types
+- relying on reflection APIs
+
+You:
+
+- generate a static model at compile time
+- use it safely at runtime
+
+## Use Cases
+
+- JSON mapping frameworks
+- schema generation
+- UI binding systems
+- validation frameworks
+- meta-programming without runtime reflection
+
+## When should you use it?
+
+Use it if:
+
+- you need structured metadata about types
+- you want to avoid runtime reflection
+- you build framework-level infrastructure
+
+Avoid it if:
+
+- you only need simple reflection occasionally
+- you do not want compile-time macro complexity
+
+## Positioning
+
+- vs Java reflection: faster, safer, deterministic
+- vs Scala 3 macros directly: higher-level abstraction
+- vs shapeless and derivation libraries: more explicit control model
 
 ## Quick Start
 
