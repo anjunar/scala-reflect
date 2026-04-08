@@ -42,6 +42,72 @@ libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.0.0"
 libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.0.0"
 ```
 
+## Publishing to Maven Central
+
+The build is configured for Sonatype Central Portal publishing with `sbt 1.11.x`.
+
+### Prerequisites
+
+- a verified namespace in Sonatype Central for the `organization` in `build.sbt`
+- GPG installed locally
+- a GPG key uploaded to a public keyserver
+- a Sonatype Central user token
+
+### Local credentials
+
+Do not commit Sonatype credentials into this repository.
+
+Create `~/.sbt/1.0/credentials.sbt`:
+
+```scala
+credentials += Credentials(Path.userHome / ".sbt" / "sonatype_central_credentials")
+```
+
+Then create `~/.sbt/sonatype_central_credentials`:
+
+```properties
+host=central.sonatype.com
+user=<your-sonatype-username>
+password=<your-sonatype-token>
+```
+
+Alternatively, you can provide the same values via the environment variables
+`SONATYPE_USERNAME` and `SONATYPE_PASSWORD`.
+
+### Publish commands
+
+Create the signed bundle:
+
+```bash
+sbt publishSigned
+```
+
+Upload the bundle to Central Portal:
+
+```bash
+sbt sonaUpload
+```
+
+Upload and trigger release directly:
+
+```bash
+sbt sonaRelease
+```
+
+On Windows, if `gpg.exe` is installed but not yet visible in the current shell
+session, you can use:
+
+```powershell
+.\scripts\release-central.ps1
+```
+
+### Important note about coordinates
+
+The current group ID is `com.anjunar`. This must match a namespace that is
+actually registered and verified in Sonatype Central. If your verified namespace
+is instead based on GitHub, for example `io.github.anjunar`, update
+`ThisBuild / organization` before the first public release.
+
 ## Example
 
 ```scala
