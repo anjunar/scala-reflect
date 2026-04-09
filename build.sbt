@@ -57,7 +57,7 @@ lazy val scalaReflect = crossProject(JSPlatform, JVMPlatform)
 lazy val scalaReflectJS = scalaReflect.js
 lazy val scalaReflectJVM = scalaReflect.jvm
 
-lazy val root = Project(id = "scala-reflect", base = file("."))
+lazy val root = Project(id = "scala-reflect-root", base = file("."))
   .aggregate(scalaReflectJS, scalaReflectJVM)
   .settings(
     name := "scala-reflect",
