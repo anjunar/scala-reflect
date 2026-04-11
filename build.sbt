@@ -1,6 +1,8 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 import org.scalajs.sbtplugin.ScalaJSPlugin
+import scalajscrossproject.JSPlatform
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
+import sbtcrossproject.JVMPlatform
 
 ThisBuild / version := "1.0.0"
 ThisBuild / organization := "com.anjunar"
@@ -43,6 +45,8 @@ lazy val commonJsSettings = Seq(
 lazy val scalaReflect = crossProject(JSPlatform, JVMPlatform)
   .crossType(CrossType.Full)
   .in(file("."))
+  .configurePlatforms(JSPlatform)(_.withId("scala-reflect-js"))
+  .configurePlatforms(JVMPlatform)(_.withId("scala-reflect-jvm"))
   .settings(
     name := "scala-reflect",
     moduleName := "scala-reflect"
@@ -54,11 +58,11 @@ lazy val scalaReflect = crossProject(JSPlatform, JVMPlatform)
     )
   )
 
-lazy val scalaReflectJS = scalaReflect.js
-lazy val scalaReflectJVM = scalaReflect.jvm
+lazy val scalaReflectJs = scalaReflect.js
+lazy val scalaReflectJvm = scalaReflect.jvm
 
 lazy val root = Project(id = "scala-reflect-root", base = file("."))
-  .aggregate(scalaReflectJS, scalaReflectJVM)
+  .aggregate(scalaReflectJs, scalaReflectJvm)
   .settings(
     name := "scala-reflect",
     moduleName := "scala-reflect",

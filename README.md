@@ -481,7 +481,7 @@ println(person)
 Run the JVM test suite with:
 
 ```bash
-sbt --batch "scalaReflectJVM/test"
+sbt --batch "scala-reflect-jvm/test"
 ```
 
 ## License
