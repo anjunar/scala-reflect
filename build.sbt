@@ -4,11 +4,11 @@ import scalajscrossproject.JSPlatform
 import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
 import sbtcrossproject.JVMPlatform
 
-ThisBuild / version := "1.0.0"
+ThisBuild / version := "1.1.0"
 ThisBuild / organization := "com.anjunar"
 ThisBuild / organizationName := "Anjunar"
 ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
-ThisBuild / scalaVersion := "3.8.3"
+ThisBuild / scalaVersion := "3.3.7"
 ThisBuild / versionScheme := Some("early-semver")
 ThisBuild / homepage := Some(url("https://github.com/anjunar/scala-reflect"))
 ThisBuild / description := "Compile-time reflection for Scala on JVM and Scala.js."
