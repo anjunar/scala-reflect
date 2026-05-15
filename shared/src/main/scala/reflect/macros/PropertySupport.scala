@@ -16,14 +16,7 @@ object PropertySupport {
 
     val accessorExpr = ReflectMacros.makeAccessorImpl[T, V](selectorExpr)
     val selectedProperty = extractPropertyName(selectorExpr)
-    val classDescriptorExpr = ReflectMacros.reflectImpl[T]
-
-    val propertyDescriptorExpr = '{
-      val cd = $classDescriptorExpr
-      cd.properties.find(_.name == ${ Expr(selectedProperty) }).getOrElse(
-        throw new IllegalStateException(s"Property ${${ Expr(selectedProperty) }} not found")
-      )
-    }
+    val propertyDescriptorExpr = buildPropertyDescriptor(TypeRepr.of[T], selectedProperty)
 
     '{
       new PropertyWithAccessor[T, V]($accessorExpr, $propertyDescriptorExpr)
@@ -135,12 +128,7 @@ object PropertySupport {
             else
               '{ PropertyAccessor.readOnly($getterExpr) }
 
-          val descriptorExpr = '{
-            val cd = ${ ReflectMacros.reflectImpl[T] }
-            cd.properties.find(_.name == ${ Expr(name) }).getOrElse(
-              throw new IllegalStateException(s"Property ${${ Expr(name) }} not found")
-            )
-          }
+          val descriptorExpr = buildPropertyDescriptor(tpe, name)
 
           '{
             new PropertyWithAccessor[T, Any]($accessorExpr.asInstanceOf[PropertyAccessor[T, Any]], $descriptorExpr)
@@ -149,6 +137,46 @@ object PropertySupport {
     }
 
     '{ Array(${ Varargs(propertyWithAccessors) }*) }
+  }
+
+  private def buildPropertyDescriptor(using Quotes)(
+    ownerType: quotes.reflect.TypeRepr,
+    propertyName: String
+  ): Expr[PropertyDescriptor] = {
+    import quotes.reflect.*
+
+    val propertySymbol = collectPropertySymbols(ownerType)
+      .find(_.name == propertyName)
+      .getOrElse(report.errorAndAbort(s"Property $propertyName not found in ${ownerType.show}"))
+
+    val nameExpr = Expr(propertySymbol.name)
+    val propertyType = ReflectMacros.normalizeType(ownerType.memberType(propertySymbol))
+    val propertyTypeExpr = ReflectMacros.buildTypeDescriptorSimple(propertyType)
+    val annotationsExpr = ReflectMacros.extractAnnotations(propertySymbol)
+
+    val setterName = s"${propertySymbol.name}_="
+    val isWriteable = ownerType.typeSymbol.methodMember(setterName).nonEmpty ||
+      ownerType.baseClasses.exists(_.methodMember(setterName).nonEmpty)
+    val isWriteableExpr = Expr(isWriteable)
+
+    val isPublicExpr = Expr(!propertySymbol.flags.is(Flags.Private) && !propertySymbol.flags.is(Flags.Protected))
+    val isPrivateExpr = Expr(propertySymbol.flags.is(Flags.Private))
+    val isProtectedExpr = Expr(propertySymbol.flags.is(Flags.Protected))
+    val isReadableExpr = Expr(!propertySymbol.flags.is(Flags.Private))
+
+    '{
+      PropertyDescriptor(
+        name = $nameExpr,
+        propertyType = $propertyTypeExpr,
+        annotations = $annotationsExpr,
+        isWriteable = $isWriteableExpr,
+        isReadable = $isReadableExpr,
+        isPublic = $isPublicExpr,
+        isPrivate = $isPrivateExpr,
+        isProtected = $isProtectedExpr,
+        accessor = None
+      )
+    }
   }
 
   private def collectPropertySymbols(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.Symbol] = {
