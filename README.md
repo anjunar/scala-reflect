@@ -36,10 +36,10 @@ If you publish it under the coordinates from `build.sbt`, the dependencies are:
 
 ```scala
 // JVM
-libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.0"
+libraryDependencies += "com.anjunar" %% "scala-reflect" % "1.1.2"
 
 // Scala.js
-libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.0"
+libraryDependencies += "com.anjunar" %%% "scala-reflect" % "1.1.2"
 ```
 
 ## Example
