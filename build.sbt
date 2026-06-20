@@ -1,25 +1,26 @@
 import org.scalajs.linker.interface.{ESVersion, ModuleKind}
-import org.scalajs.sbtplugin.ScalaJSPlugin
-import scalajscrossproject.JSPlatform
-import sbtcrossproject.CrossPlugin.autoImport.{CrossType, crossProject}
-import sbtcrossproject.JVMPlatform
 
-ThisBuild / version := "1.1.2"
-ThisBuild / organization := "com.anjunar"
-ThisBuild / organizationName := "Anjunar"
-ThisBuild / organizationHomepage := Some(url("https://github.com/anjunar"))
-ThisBuild / scalaVersion := "3.3.7"
-ThisBuild / versionScheme := Some("early-semver")
-ThisBuild / homepage := Some(url("https://github.com/anjunar/scala-reflect"))
-ThisBuild / description := "Compile-time reflection for Scala on JVM and Scala.js."
-ThisBuild / licenses := List("MIT" -> url("https://opensource.org/licenses/MIT"))
-ThisBuild / scmInfo := Some(
+lazy val scala3 = "3.3.8"
+lazy val rootDir = file(".").getAbsoluteFile
+
+version := "1.1.3"
+organization := "com.anjunar"
+organizationName := "Anjunar"
+organizationHomepage := Some(url("https://github.com/anjunar"))
+scalaVersion := scala3
+versionScheme := Some("early-semver")
+homepage := Some(url("https://github.com/anjunar/scala-reflect"))
+description := "Compile-time reflection for Scala on JVM and Scala.js."
+licenses := List("MIT" -> url("https://opensource.org/licenses/MIT"))
+
+scmInfo := Some(
   ScmInfo(
     url("https://github.com/anjunar/scala-reflect"),
     "scm:git:git@github.com:anjunar/scala-reflect.git"
   )
 )
-ThisBuild / developers := List(
+
+developers := List(
   Developer(
     id = "anjunar",
     name = "Anjunar",
@@ -27,12 +28,28 @@ ThisBuild / developers := List(
     url = url("https://github.com/anjunar")
   )
 )
-ThisBuild / pomIncludeRepository := { _ => false }
-ThisBuild / publishMavenStyle := true
-ThisBuild / publishTo := {
+
+pomIncludeRepository := { _ => false }
+publishMavenStyle := true
+
+publishTo := {
   val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
   if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
   else localStaging.value
+}
+
+def platformDir(axes: Seq[VirtualAxis]): String =
+  if (axes.contains(VirtualAxis.js)) "js"
+  else if (axes.contains(VirtualAxis.jvm)) "jvm"
+  else sys.error(s"Unsupported platform axes: $axes")
+
+def crossDirs(configuration: String, kind: String) = Def.setting {
+  val platform = platformDir(virtualAxes.value)
+
+  Seq(
+    rootDir / "shared" / "src" / configuration / kind,
+    rootDir / platform / "src" / configuration / kind
+  )
 }
 
 lazy val commonJsSettings = Seq(
@@ -42,29 +59,42 @@ lazy val commonJsSettings = Seq(
     )
 )
 
-lazy val scalaReflect = crossProject(JSPlatform, JVMPlatform)
-  .crossType(CrossType.Full)
-  .in(file("."))
-  .configurePlatforms(JSPlatform)(_.withId("scala-reflect-js"))
-  .configurePlatforms(JVMPlatform)(_.withId("scala-reflect-jvm"))
-  .settings(
-    name := "scala-reflect",
-    moduleName := "scala-reflect"
-  )
-  .jsSettings(commonJsSettings)
-  .jvmSettings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %% "scalatest" % "3.2.19" % Test
+lazy val commonCrossSettings = Seq(
+  name := "scala-reflect",
+  moduleName := "scala-reflect",
+
+  Compile / unmanagedSourceDirectories := crossDirs("main", "scala").value,
+  Test / unmanagedSourceDirectories := crossDirs("test", "scala").value,
+
+  Compile / unmanagedResourceDirectories := crossDirs("main", "resources").value,
+  Test / unmanagedResourceDirectories := crossDirs("test", "resources").value
+)
+
+lazy val scalaReflect = (projectMatrix in file("."))
+  .defaultAxes(VirtualAxis.jvm, VirtualAxis.scalaABIVersion(scala3))
+  .settings(commonCrossSettings)
+  .jvmPlatform(
+    scalaVersions = Seq(scala3),
+    settings = Seq(
+      libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.19" % Test
     )
   )
+  .jsPlatform(
+    scalaVersions = Seq(scala3),
+    settings = commonJsSettings
+  )
 
-lazy val scalaReflectJs = scalaReflect.js
-lazy val scalaReflectJvm = scalaReflect.jvm
+lazy val scalaReflectJvm = scalaReflect.jvm(scala3)
+lazy val scalaReflectJs = scalaReflect.js(scala3)
 
 lazy val root = Project(id = "scala-reflect-root", base = file("."))
-  .aggregate(scalaReflectJs, scalaReflectJvm)
+  .aggregate(scalaReflectJvm, scalaReflectJs)
   .settings(
-    name := "scala-reflect",
-    moduleName := "scala-reflect",
-    publish / skip := true
+    name := "scala-reflect-root",
+    moduleName := "scala-reflect-root",
+    publish / skip := true,
+    Compile / unmanagedSourceDirectories := Seq.empty,
+    Test / unmanagedSourceDirectories := Seq.empty,
+    Compile / unmanagedResourceDirectories := Seq.empty,
+    Test / unmanagedResourceDirectories := Seq.empty
   )
