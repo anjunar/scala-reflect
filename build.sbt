@@ -3,7 +3,7 @@ import org.scalajs.linker.interface.{ESVersion, ModuleKind}
 lazy val scala3 = "3.3.8"
 lazy val rootDir = file(".").getAbsoluteFile
 
-version := "1.1.3"
+version := "1.1.4"
 organization := "com.anjunar"
 organizationName := "Anjunar"
 organizationHomepage := Some(url("https://github.com/anjunar"))
