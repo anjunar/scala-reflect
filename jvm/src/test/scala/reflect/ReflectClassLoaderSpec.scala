@@ -98,3 +98,4 @@ class ReflectClassLoaderSpec extends AnyFlatSpec with Matchers {
     loader.getResource("person.schema") shouldBe Some("Person schema content")
   }
 }
+

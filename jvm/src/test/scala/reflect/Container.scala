@@ -5,3 +5,4 @@ import org.scalatest.matchers.should.Matchers
 import reflect.macros.ReflectMacros
 
 case class Container[T](value: T)
+

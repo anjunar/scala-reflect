@@ -19,3 +19,4 @@ class ReflectResourceLoader extends ResourceLoader {
 
   def clear(): Unit = resources.clear()
 }
+

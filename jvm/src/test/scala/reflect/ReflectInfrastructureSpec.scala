@@ -87,3 +87,4 @@ class ReflectInfrastructureSpec extends AnyFlatSpec with Matchers with BeforeAnd
     instance.value shouldBe "updated"
   }
 }
+

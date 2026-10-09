@@ -64,3 +64,4 @@ class ReflectClassLoaderApiSpec extends AnyFlatSpec with Matchers {
     ReflectRegistry.clear()
   }
 }
+

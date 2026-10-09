@@ -8,3 +8,4 @@ class AnnotatedClass {
   @scala.annotation.nowarn("msg=unused")
   val value: String = ""
 }
+
