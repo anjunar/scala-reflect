@@ -87,9 +87,3 @@ class ReflectInfrastructureSpec extends AnyFlatSpec with Matchers with BeforeAnd
     instance.value shouldBe "updated"
   }
 }
-
-case class RegistryBoundEntity(value: String)
-case class LoaderEntity(value: String)
-case class StandaloneEntity(value: String)
-case class AccessorEntity(var value: String)
-case class MutableValueHolder(var value: String)

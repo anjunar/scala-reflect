@@ -64,7 +64,3 @@ class ReflectClassLoaderApiSpec extends AnyFlatSpec with Matchers {
     ReflectRegistry.clear()
   }
 }
-
-case class Table[T]()
-case class Document(content: String)
-case class Query(sql: String)

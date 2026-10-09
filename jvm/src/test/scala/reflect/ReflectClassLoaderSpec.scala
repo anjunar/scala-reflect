@@ -98,20 +98,3 @@ class ReflectClassLoaderSpec extends AnyFlatSpec with Matchers {
     loader.getResource("person.schema") shouldBe Some("Person schema content")
   }
 }
-
-case class Person(name: String, age: Int)
-
-class Employee(name: String, age: Int, val department: String) extends Person(name, age)
-
-case class Container[T](value: T)
-
-class AnnotatedClass {
-  @scala.annotation.nowarn("msg=unused")
-  val value: String = ""
-}
-
-class MutableClass {
-  var value: String = ""
-}
-
-case class ImmutableClass(value: String)
