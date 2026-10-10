@@ -81,9 +81,9 @@ class ReflectClassLoader(
 
   def contains(typeName: String): Boolean =
     localRegistry.contains(typeName) ||
-    parent.exists(_.contains(typeName)) ||
-    ClassDescriptor.maybeForName(typeName).nonEmpty ||
-    ClassDescriptor.maybeForSimpleName(typeName).nonEmpty
+      parent.exists(_.contains(typeName)) ||
+      ClassDescriptor.maybeForName(typeName).nonEmpty ||
+      ClassDescriptor.maybeForSimpleName(typeName).nonEmpty
 
   def clearLocal(): Unit = {
     localRegistry.clear()

@@ -7,7 +7,7 @@ trait ConstructorInvoker[T] {
 }
 
 object ConstructorInvoker {
-  
+
   def apply[T](factory: Seq[Any] => T, params: Int, varArgs: Boolean = false): ConstructorInvoker[T] =
     new ConstructorInvoker[T] {
       override def newInstance(args: Any*): T = factory(args.toSeq)

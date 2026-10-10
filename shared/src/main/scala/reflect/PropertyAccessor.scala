@@ -7,14 +7,14 @@ trait PropertyAccessor[E, V] {
 }
 
 object PropertyAccessor {
-  
+
   def apply[E, V](getter: E => V, setter: (E, V) => Unit): PropertyAccessor[E, V] =
     new PropertyAccessor[E, V] {
       override def get(instance: E): V = getter(instance)
       override def set(instance: E, value: V): Unit = setter(instance, value)
       override def hasSetter: Boolean = true
     }
-  
+
   def readOnly[E, V](getter: E => V): PropertyAccessor[E, V] =
     new PropertyAccessor[E, V] {
       override def get(instance: E): V = getter(instance)

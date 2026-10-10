@@ -4,7 +4,7 @@ final case class TypeVariableDescriptor(
   name: String,
   bounds: Array[String]
 ) extends TypeDescriptor {
-  
+
   override def typeName: String = name
   override def simpleName: String = name
   override def annotations: Array[Annotation] = Array.empty

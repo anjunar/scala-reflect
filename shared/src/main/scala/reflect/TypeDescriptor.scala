@@ -11,12 +11,12 @@ trait TypeDescriptor {
   def isAbstract: Boolean
   def isFinal: Boolean
   def isCaseClass: Boolean
-  
+
   final def isParameterized: Boolean = typeParameters.nonEmpty
-  
+
   final def hasAnnotation(annotationClass: String): Boolean =
     annotations.exists(_.annotationClassName == annotationClass)
-  
+
   final def getAnnotation(annotationClass: String): Option[Annotation] =
     annotations.find(_.annotationClassName == annotationClass)
 }

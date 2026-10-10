@@ -2,6 +2,7 @@ package reflect.macros
 
 import scala.quoted.*
 import reflect.*
+import scala.annotation.tailrec
 
 object ReflectMacros {
 
@@ -120,7 +121,8 @@ object ReflectMacros {
                 .orElse(tpe.baseClasses.flatMap(_.methodMember(setterName)).headOption)
               setterSym match {
                 case Some(sym) =>
-                  val setterExpr = '{ (t: T, vv: v) => ${ Select('{ t }.asTerm, sym).appliedTo('{ vv }.asTerm).asExprOf[Unit] } }
+                  val setterExpr =
+                    '{ (t: T, vv: v) => ${ Select('{ t }.asTerm, sym).appliedTo('{ vv }.asTerm).asExprOf[Unit] } }
                   '{ PropertyAccessor($getterExpr, $setterExpr) }
                 case None =>
                   '{ PropertyAccessor.readOnly($getterExpr) }
@@ -146,19 +148,19 @@ object ReflectMacros {
 
     '{ Array(${ Varargs(propertyDescriptors) }*) }
   }
-  
+
   private def reflectTypeImpl[T: Type](using Quotes): Expr[TypeDescriptor] = {
     import quotes.reflect.*
-    
+
     val tpe = TypeRepr.of[T]
     buildTypeDescriptor(tpe)
   }
-  
+
   private def buildTypeDescriptor(using Quotes)(tpe: quotes.reflect.TypeRepr): Expr[TypeDescriptor] = {
     import quotes.reflect.*
-    
+
     val normalized = tpe.widenTermRefByName.dealias
-    
+
     normalized match {
       case AppliedType(raw, args) =>
         val rawClassExpr = reflectImplUsingType(raw)
@@ -169,24 +171,24 @@ object ReflectMacros {
             typeArguments = ${ Expr.ofList(argsExprs) }.toArray
           )
         }
-      
+
       case tr: TypeRef if tr.typeSymbol.flags.is(Flags.Param) =>
         val nameExpr = Expr(tr.typeSymbol.name)
         val boundsExpr = extractBounds(tr.typeSymbol)
         '{ TypeVariableDescriptor(name = $nameExpr, bounds = $boundsExpr) }
-      
+
       case arr if arr <:< TypeRepr.of[Array[?]] =>
         arr.asType match {
           case '[Array[a]] =>
             val componentExpr = buildTypeDescriptor(TypeRepr.of[a])
             '{ ArrayTypeDescriptor(componentType = $componentExpr) }
         }
-      
+
       case _ =>
         reflectImplUsingType(normalized)
     }
   }
-  
+
   private def reflectImplUsingType(using Quotes)(tpe: quotes.reflect.TypeRepr): Expr[ClassDescriptor] = {
     import quotes.reflect.*
     tpe.asType match {
@@ -332,7 +334,9 @@ object ReflectMacros {
     }
   }
 
-  private def extractPropertiesImplUsingType(using Quotes)(tpe: quotes.reflect.TypeRepr): Expr[Array[PropertyDescriptor]] = {
+  private def extractPropertiesImplUsingType(using
+    Quotes
+  )(tpe: quotes.reflect.TypeRepr): Expr[Array[PropertyDescriptor]] = {
     import quotes.reflect.*
 
     val propertySymbols = collectPropertySymbols(tpe)
@@ -369,7 +373,7 @@ object ReflectMacros {
 
     '{ Array(${ Varargs(propertyDescriptors) }*) }
   }
-  
+
   private def extractConstructorsImpl[T: Type](using Quotes): Expr[Array[ConstructorDescriptor]] = {
     import quotes.reflect.*
 
@@ -415,8 +419,10 @@ object ReflectMacros {
         }
     }
   }
-  
-  private[macros] def makeAccessorImpl[E: Type, V: Type](using Quotes)(selectorExpr: Expr[E => V]): Expr[PropertyAccessor[E, V]] = {
+
+  private[macros] def makeAccessorImpl[E: Type, V: Type](using
+    Quotes
+  )(selectorExpr: Expr[E => V]): Expr[PropertyAccessor[E, V]] = {
     import quotes.reflect.*
 
     val getterLambda = '{ (e: E) => $selectorExpr(e) }
@@ -424,14 +430,14 @@ object ReflectMacros {
     val selectedProperty = extractPropertySelector(selectorExpr)
     val setterName = s"${selectedProperty}_="
     val tpe = TypeRepr.of[E]
-    
+
     val setterExists = tpe.typeSymbol.methodMember(setterName).nonEmpty ||
       tpe.baseClasses.exists(_.methodMember(setterName).nonEmpty)
 
     if setterExists then
       val setterSym = tpe.typeSymbol.methodMember(setterName).headOption
         .orElse(tpe.baseClasses.flatMap(_.methodMember(setterName)).headOption)
-      
+
       setterSym match {
         case Some(sym) =>
           val setterLambda = '{
@@ -447,7 +453,7 @@ object ReflectMacros {
     else
       '{ PropertyAccessor.readOnly($getterLambda) }
   }
-  
+
   private def createInstanceImpl[T: Type](using Quotes)(argsExpr: Expr[Seq[Any]]): Expr[T] = {
     import quotes.reflect.*
 
@@ -509,7 +515,9 @@ object ReflectMacros {
       val defaultArguments =
         parameters.zipWithIndex.map { case (_, index) =>
           val getterName = s"$$lessinit$$greater$$default$$${index + 1}"
-          symbol.companionModule.methodMember(getterName).headOption.map(getter => Select(Ref(symbol.companionModule), getter))
+          symbol.companionModule.methodMember(getterName).headOption.map(getter =>
+            Select(Ref(symbol.companionModule), getter)
+          )
         }
 
       if parameters.nonEmpty && defaultArguments.exists(_.isEmpty) then
@@ -519,8 +527,10 @@ object ReflectMacros {
         val ctorTerm = Select(newTerm, constructor)
         Some(Apply(ctorTerm, defaultArguments.flatten))
   }
-  
-  private[macros] def collectPropertySymbols(using Quotes)(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.Symbol] = {
+
+  private[macros] def collectPropertySymbols(using
+    Quotes
+  )(tpe: quotes.reflect.TypeRepr): List[quotes.reflect.Symbol] = {
     import quotes.reflect.*
 
     // Collect property symbols from the class and all base classes
@@ -531,7 +541,8 @@ object ReflectMacros {
         !s.flags.is(Flags.Private) && !s.flags.is(Flags.Protected) &&
         !s.name.contains("$") &&
         !s.name.endsWith("_=") &&
-        s.name != "hashCode" && s.name != "toString" && s.name != "getClass" && s.name != "clone" && s.name != "notify" && s.name != "notifyAll" && s.name != "wait" && s.name != "finalize" &&
+        s.name != "hashCode" && s.name != "toString" && s.name != "getClass" && s.name != "clone" &&
+        s.name != "notify" && s.name != "notifyAll" && s.name != "wait" && s.name != "finalize" &&
         !s.isClassConstructor &&
         !s.flags.is(Flags.Macro) &&
         !s.flags.is(Flags.Artifact)
@@ -561,7 +572,7 @@ object ReflectMacros {
       }
       .toList
   }
-  
+
   private[macros] def extractAnnotations(using Quotes)(symbol: quotes.reflect.Symbol): Expr[Array[Annotation]] = {
     import quotes.reflect.*
 
@@ -584,53 +595,55 @@ object ReflectMacros {
     val annotationExprs = annotationSource.annotations.flatMap { ann =>
       val className = ann.tpe.typeSymbol.fullName
       val params = extractAnnotationParams(ann)
-      
+
       if params.isEmpty then
         Some('{ Annotation(${ Expr(className) }, Map.empty) })
       else
         val paramsExpr = '{ Map(${ Varargs(params.map { case (k, v) => '{ (${ Expr(k) }, $v) } }) }*) }
         Some('{ Annotation(${ Expr(className) }, $paramsExpr) })
     }
-    
+
     '{ Array(${ Varargs(annotationExprs) }*) }
   }
-  
+
   private[macros] def extractAnnotationParams(using Quotes)(ann: quotes.reflect.Term): List[(String, Expr[Any])] = {
     import quotes.reflect.*
-    
+
     ann match {
       case Apply(_, args) =>
         val paramNames = ann.tpe.typeSymbol.primaryConstructor.paramSymss.flatten.map(_.name)
         args.zip(paramNames).collect {
-          case (NamedArg(name, Literal(StringConstant(v))), _) => (name, Expr(v).asExprOf[Any])
-          case (NamedArg(name, Literal(IntConstant(v))), _) => (name, Expr(v).asExprOf[Any])
-          case (NamedArg(name, Literal(LongConstant(v))), _) => (name, Expr(v).asExprOf[Any])
-          case (NamedArg(name, Literal(DoubleConstant(v))), _) => (name, Expr(v).asExprOf[Any])
+          case (NamedArg(name, Literal(StringConstant(v))), _)  => (name, Expr(v).asExprOf[Any])
+          case (NamedArg(name, Literal(IntConstant(v))), _)     => (name, Expr(v).asExprOf[Any])
+          case (NamedArg(name, Literal(LongConstant(v))), _)    => (name, Expr(v).asExprOf[Any])
+          case (NamedArg(name, Literal(DoubleConstant(v))), _)  => (name, Expr(v).asExprOf[Any])
           case (NamedArg(name, Literal(BooleanConstant(v))), _) => (name, Expr(v).asExprOf[Any])
-          case (Literal(StringConstant(v)), name) => (name, Expr(v).asExprOf[Any])
-          case (Literal(IntConstant(v)), name) => (name, Expr(v).asExprOf[Any])
-          case (Literal(LongConstant(v)), name) => (name, Expr(v).asExprOf[Any])
-          case (Literal(DoubleConstant(v)), name) => (name, Expr(v).asExprOf[Any])
-          case (Literal(BooleanConstant(v)), name) => (name, Expr(v).asExprOf[Any])
+          case (Literal(StringConstant(v)), name)               => (name, Expr(v).asExprOf[Any])
+          case (Literal(IntConstant(v)), name)                  => (name, Expr(v).asExprOf[Any])
+          case (Literal(LongConstant(v)), name)                 => (name, Expr(v).asExprOf[Any])
+          case (Literal(DoubleConstant(v)), name)               => (name, Expr(v).asExprOf[Any])
+          case (Literal(BooleanConstant(v)), name)              => (name, Expr(v).asExprOf[Any])
         }
       case _ => Nil
     }
   }
-  
+
   private[macros] def extractBaseTypes(using Quotes)(tpe: quotes.reflect.TypeRepr): Expr[Array[String]] = {
     import quotes.reflect.*
-    
+
     val baseTypes = tpe.baseClasses
       .map(_.fullName)
       .filter(_.nonEmpty)
       .filter(_ != tpe.typeSymbol.fullName)
-    
+
     '{ Array(${ Varargs(baseTypes.map(Expr(_))) }*) }
   }
-  
-  private[macros] def extractTypeParameters(using Quotes)(symbol: quotes.reflect.Symbol): Expr[Array[TypeDescriptor]] = {
+
+  private[macros] def extractTypeParameters(using
+    Quotes
+  )(symbol: quotes.reflect.Symbol): Expr[Array[TypeDescriptor]] = {
     import quotes.reflect.*
-    
+
     val typeParams = symbol.typeMembers.collect {
       case s if s.flags.is(Flags.Param) =>
         val nameExpr = Expr(s.name)
@@ -639,10 +652,10 @@ object ReflectMacros {
     }
     '{ Array(${ Varargs(typeParams) }*) }
   }
-  
+
   private def extractBounds(using Quotes)(symbol: quotes.reflect.Symbol): Expr[Array[String]] = {
     import quotes.reflect.*
-    
+
     val bounds = symbol.tree match {
       case tree: quotes.reflect.TypeDef =>
         tree.rhs match {
@@ -654,47 +667,47 @@ object ReflectMacros {
     }
     Expr(bounds)
   }
-  
+
   private[macros] def extractPropertySelector(using Quotes)(expr: Expr[Any]): String = {
     import quotes.reflect.*
 
     def loop(term: Term): String = term match {
-      case Inlined(_, _, inner) => loop(inner)
-      case Block(_, inner) => loop(inner)
-      case Typed(inner, _) => loop(inner)
+      case Inlined(_, _, inner)    => loop(inner)
+      case Block(_, inner)         => loop(inner)
+      case Typed(inner, _)         => loop(inner)
       case Select(qualifier, name) =>
         qualifier match {
           case Ident(paramName) => name
-          case _ => loop(qualifier)
+          case _                => loop(qualifier)
         }
-      case Ident(name) => name
-      case Lambda(params, body) => loop(body)
-      case Closure(inner, _) => loop(inner)
+      case Ident(name)                                          => name
+      case Lambda(params, body)                                 => loop(body)
+      case Closure(inner, _)                                    => loop(inner)
       case Apply(TypeApply(Select(_, "apply"), _), List(inner)) => loop(inner)
       case _ => report.errorAndAbort(s"Expected a simple property selector: ${term.show}")
     }
 
     loop(expr.asTerm)
   }
-  
+
   private[macros] def normalizeType(using Quotes)(tpe: quotes.reflect.TypeRepr): quotes.reflect.TypeRepr = {
     import quotes.reflect.*
-    
-    @scala.annotation.tailrec
+
+    @tailrec
     def loop(current: TypeRepr): TypeRepr = {
       val simplified = current.widenTermRefByName.dealias.simplified
       simplified match {
-        case AnnotatedType(inner, _) => loop(inner)
-        case ByNameType(inner) => loop(inner)
+        case AnnotatedType(inner, _)                 => loop(inner)
+        case ByNameType(inner)                       => loop(inner)
         case mt: MethodType if mt.paramTypes.isEmpty => loop(mt.resType)
-        case pt: PolyType => loop(pt.resType)
-        case ct: ConstantType =>
+        case pt: PolyType                            => loop(pt.resType)
+        case ct: ConstantType                        =>
           val widened = ct.widen
           if widened =:= ct then ct else loop(widened)
         case other => other
       }
     }
-    
+
     loop(tpe)
   }
 }

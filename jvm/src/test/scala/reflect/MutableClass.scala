@@ -7,4 +7,3 @@ import reflect.macros.ReflectMacros
 class MutableClass {
   var value: String = ""
 }
-

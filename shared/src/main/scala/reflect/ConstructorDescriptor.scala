@@ -6,8 +6,8 @@ final case class ConstructorDescriptor(
   isPrimary: Boolean,
   isPrivate: Boolean
 ) {
-  
+
   def parameterCount: Int = parameters.length
-  
+
   def parameterNames: Array[String] = parameters.map(_.name)
 }

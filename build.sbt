@@ -56,7 +56,7 @@ lazy val commonJsSettings = Seq(
   scalaJSLinkerConfig ~= (
     _.withModuleKind(ModuleKind.ESModule)
       .withESFeatures(_.withESVersion(ESVersion.ES2021))
-    )
+  )
 )
 
 lazy val commonCrossSettings = Seq(

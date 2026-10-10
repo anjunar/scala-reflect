@@ -43,11 +43,11 @@ final case class ClassDescriptor(
 
   def resolved: ClassDescriptor =
     ClassDescriptor.resolve(this)
-  
+
   lazy val propertyNames: Array[String] = properties.map(_.name)
   lazy val typeParameterNames: Array[String] =
     typeParameters.collect { case variable: TypeVariableDescriptor => variable.name }
-  
+
   def getProperty(name: String): Option[PropertyDescriptor] =
     properties.find(_.name == name)
 
@@ -59,15 +59,15 @@ final case class ClassDescriptor(
     getPropertyAccessor(name).getOrElse(
       throw new IllegalArgumentException(s"Missing accessor for $typeName.$name")
     )
-  
+
   def getWriteableProperties: Array[PropertyDescriptor] =
     properties.filter(_.isWriteable)
-  
+
   def getReadableProperties: Array[PropertyDescriptor] =
     properties.filter(_.isReadable)
-  
+
   def hasProperty(name: String): Boolean = propertyNames.contains(name)
-  
+
   def isSubTypeOf(otherTypeName: String): Boolean =
     baseTypes.contains(otherTypeName) || ClassDescriptor.isAssignableFrom(typeName, otherTypeName)
 
@@ -111,7 +111,8 @@ object ClassDescriptor {
       annotations = if descriptor.annotations.nonEmpty then descriptor.annotations else registered.annotations,
       properties = mergeProperties(descriptor.properties, registered.properties),
       baseTypes = if descriptor.baseTypes.nonEmpty then descriptor.baseTypes else registered.baseTypes,
-      typeParameters = if descriptor.typeParameters.nonEmpty then descriptor.typeParameters else registered.typeParameters,
+      typeParameters =
+        if descriptor.typeParameters.nonEmpty then descriptor.typeParameters else registered.typeParameters,
       constructors = if descriptor.constructors.nonEmpty then descriptor.constructors else registered.constructors,
       isAbstract = descriptor.isAbstract || registered.isAbstract,
       isFinal = descriptor.isFinal || registered.isFinal,
@@ -123,7 +124,10 @@ object ClassDescriptor {
     merged
   }
 
-  private def mergeProperties(descriptorProperties: Array[PropertyDescriptor], registeredProperties: Array[PropertyDescriptor]): Array[PropertyDescriptor] =
+  private def mergeProperties(
+    descriptorProperties: Array[PropertyDescriptor],
+    registeredProperties: Array[PropertyDescriptor]
+  ): Array[PropertyDescriptor] =
     if descriptorProperties.isEmpty then registeredProperties
     else
       val mergedDeclared = descriptorProperties.map { property =>

@@ -7,10 +7,10 @@ final case class ParameterDescriptor(
   hasDefault: Boolean,
   defaultIndex: Int
 ) {
-  
+
   def hasAnnotation(annotationClass: String): Boolean =
     annotations.exists(_.annotationClassName == annotationClass)
-  
+
   def getAnnotation(annotationClass: String): Option[Annotation] =
     annotations.find(_.annotationClassName == annotationClass)
 }

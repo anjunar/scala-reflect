@@ -3,7 +3,7 @@ package reflect
 final case class ArrayTypeDescriptor(
   componentType: TypeDescriptor
 ) extends TypeDescriptor {
-  
+
   override def typeName: String = s"${componentType.typeName}[]"
   override def simpleName: String = componentType.typeName.split('.').last + "[]"
   override def annotations: Array[Annotation] = Array.empty

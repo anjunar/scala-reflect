@@ -2,6 +2,7 @@ package reflect.macros
 
 import scala.quoted.*
 import reflect.{PropertyAccessor, PropertyDescriptor}
+import scala.annotation.tailrec
 
 object PropertySupport {
 
@@ -11,7 +12,9 @@ object PropertySupport {
   inline def extractPropertiesWithAccessors[T]: Array[PropertyWithAccessor[T, Any]] =
     ${ extractPropertiesWithAccessorsImpl[T] }
 
-  private def makePropertyImpl[T: Type, V: Type](using Quotes)(selectorExpr: Expr[T => V]): Expr[PropertyWithAccessor[T, V]] = {
+  private def makePropertyImpl[T: Type, V: Type](using
+    Quotes
+  )(selectorExpr: Expr[T => V]): Expr[PropertyWithAccessor[T, V]] = {
     import quotes.reflect.*
 
     val accessorExpr = ReflectMacros.makeAccessorImpl[T, V](selectorExpr)
@@ -85,7 +88,7 @@ object PropertySupport {
     propertyFromSelector(selectorExpr).name
   }
 
-  @scala.annotation.tailrec
+  @tailrec
   private def unwrapTerm(using Quotes)(term: quotes.reflect.Term): quotes.reflect.Term = {
     import quotes.reflect.*
     term match {
@@ -139,7 +142,9 @@ object PropertySupport {
     '{ Array(${ Varargs(propertyWithAccessors) }*) }
   }
 
-  private def buildPropertyDescriptor(using Quotes)(
+  private def buildPropertyDescriptor(using
+    Quotes
+  )(
     ownerType: quotes.reflect.TypeRepr,
     propertyName: String
   ): Expr[PropertyDescriptor] = {
@@ -190,7 +195,8 @@ object PropertySupport {
         !s.flags.is(Flags.Private) && !s.flags.is(Flags.Protected) &&
         !s.name.contains("$") &&
         !s.name.endsWith("_=") &&
-        s.name != "hashCode" && s.name != "toString" && s.name != "getClass" && s.name != "clone" && s.name != "notify" && s.name != "notifyAll" && s.name != "wait" && s.name != "finalize" &&
+        s.name != "hashCode" && s.name != "toString" && s.name != "getClass" && s.name != "clone" &&
+        s.name != "notify" && s.name != "notifyAll" && s.name != "wait" && s.name != "finalize" &&
         !s.isClassConstructor &&
         !s.flags.is(Flags.Macro) &&
         !s.flags.is(Flags.Artifact)

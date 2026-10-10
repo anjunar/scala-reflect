@@ -71,10 +71,12 @@ object ReflectRegistry {
               case (Some(subRuntimeClass), Some(superRuntimeClass)) =>
                 superRuntimeClass.isAssignableFrom(subRuntimeClass)
               case _ =>
-                subDescriptor.baseTypes.contains(superType) || subDescriptor.baseTypes.exists(bt => isAssignableFrom(bt, superType))
+                subDescriptor.baseTypes.contains(superType) ||
+                subDescriptor.baseTypes.exists(bt => isAssignableFrom(bt, superType))
             }
           case None =>
-            subDescriptor.baseTypes.contains(superType) || subDescriptor.baseTypes.exists(bt => isAssignableFrom(bt, superType))
+            subDescriptor.baseTypes.contains(superType) ||
+            subDescriptor.baseTypes.exists(bt => isAssignableFrom(bt, superType))
         }
       case None =>
         false

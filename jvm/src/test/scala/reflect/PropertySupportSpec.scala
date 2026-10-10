@@ -135,7 +135,12 @@ class PropertySupportSpec extends AnyFlatSpec with Matchers {
     trait Trait1 { val prop1: String = "p1" }
     trait Trait2 { val prop2: Int = 2 }
     abstract class Base extends Trait1 { val base: String = "base" }
-    case class MultiTraitEntity(override val prop1: String, override val prop2: Int, override val base: String, local: String) extends Base with Trait2
+    case class MultiTraitEntity(
+      override val prop1: String,
+      override val prop2: Int,
+      override val base: String,
+      local: String
+    ) extends Base with Trait2
 
     abstract class Schema[T] {
       protected inline def prop[V](inline selector: T => V): String = {
